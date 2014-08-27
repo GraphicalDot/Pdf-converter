@@ -14,11 +14,9 @@ import pdfminer
 import sys
 
 
-
-
 class PDFConverter:
 
-	def __init__(self, document, encoding=None, pages=None, images_folder=None):
+	def __init__(self, document, encoding=None, pages=None, images_folder=None, average_vdist=None):
 		"""
 		Points to remember:
 			1. bbox[0] is the starting x coordinate, bbox[1] is the starting y coordinate, bbox[2] is the ending x coordinate 
@@ -51,14 +49,59 @@ class PDFConverter:
 			if not document.is_extractable:
 				raise StandardError("Document cannot be extracted")
 		
-		
-		#TODO : metadata of the pdf page
-		"""
+	
 
+
+
+
+		vdistance = list()
+		i = 0
+		
+		for element in self.objects_respective_vertical_distance:
+			print element.get("vertical_distance_with_object_above"), element.get("text")
+			vdistance.append(element.get("vertical_distance_with_object_above"))
+	
+		self.average_vdist = sum([i for i in vdistance if i != 0])/len([i for i in vdistance if i != 0])
+	
+	
+		print average_vdist
+		#TODO : metadata of the pdf page
+		
+		
+		
+		Variables:
+			self.objects_respective_vertical_distance
+			list of the form with every element like this
+					{"vertical_distance_with_object_above": layout_object.vdistance(self.whole_objects_list[-1]["object"]), 
+							##Distance of this object fromt he object just present above it in the pdf
+					"x0": 
+						layout_object.x0, 
+						##Objects starting x coordinate
+					"x1": 	
+						layout_object.x1, 
+						##Objects ending x coordinate
+					"y0": 
+						layout_object.y0, 
+						##Objects starting y coordinate
+					"y1": 
+						layout_object.y1,
+						##Objects ending y  coordinate
+					"text": 
+						layout_object.get_text(), 
+			self.formatted_output:
+					a list which will have formatted output of questions	
+				
+		This list was created to calculate the self.average_vdist variable of this class, This average_vdist is the average distance 
+		bewteen the lines in the pdf.
+		If the distance is less than average_vdist, implies the text belongs to the same question
+		"""
+		self.average_vdist = average_vdist
 		self.objects_heights = list()
 		self.whole_objects_list = list()
 		self.objects_respective_vertical_distance = list()
-		
+
+		self.formatted_output = [str()]
+
 		if encoding:
 			self.encoding = "utf-8"	
 		else:
@@ -159,7 +202,8 @@ class PDFConverter:
 					child.get_text(), 
 					})
 		except IndexError:
-			print "index error occurred"
+			#As we seek -1 element of the self.objects_respective_vertical_distance, it might give indexerror for the 
+			#first element
 			pass
 	
 		self.whole_objects_list.append({
@@ -201,7 +245,8 @@ class PDFConverter:
 								layout_object.get_text(), 
 								})
 					except IndexError:
-						print "index error occurred"
+						#As we seek -1 element of the self.objects_respective_vertical_distance, it might give indexerror for the 
+						#first element
 						pass
 					self.whole_objects_list.append({
 							"object": 
@@ -234,9 +279,7 @@ class PDFConverter:
 	
 
 		
-		print self.whole_objects_list
 		all_objects_heights = [element.get("height") for element in self.whole_objects_list]
-		print all_objects_heights
 		AVERAGE_HEIGHT = (sum(all_objects_heights)/len(all_objects_heights))
 	
 	
@@ -256,44 +299,53 @@ class PDFConverter:
 		without_heading = [element for element in FINAL_LIST if element not in another_list]
 		"""
 	
-		vdistance = list()
-		i = 0
+		self.update_average_vdist() #calculates the average_vdist class variable
+	
+		self.joining_strings_for_same_question()	#joining string that belongs to the same question
+
+	def joining_strings_for_same_question(self):
+		"""
+		This method joins the strings present in the self.objects_respective_vertical_distance after it has been sorted by 
+		rearrange_on_the_basis_of_y0 on the basis of y0(strings starting y coordinates in the pdf
+
+		Joining takes places by comparing their vertical_distance_with_object_above with the average_vdist class variable
+		if objects vertical_distance_with_object_above is less than average_vdist class variable implies that 
+		object belongs to the object present before in the self.objects_respective_vertical_distance list
+		"""
 		
-		for element in self.objects_respective_vertical_distance:
-			print element.get("vertical_distance_with_object_above"), element.get("text")
-			vdistance.append(element.get("vertical_distance_with_object_above"))
-	
-		average_vdist = sum([i for i in vdistance if i != 0])/len([i for i in vdistance if i != 0])
-	
-	
-		print average_vdist
-	
-	
-		final_list = [str()]
-	
-	
 		SORTED_QUESTION_DISTANCE = self.rearrange_on_the_basis_of_y0()
 	
 		for element in SORTED_QUESTION_DISTANCE:
 			
-			if element.get("distance") <= average_vdist:
-				final_list[-1] = "\t".join([final_list[-1], element.get("text")])
+			if element.get("vertical_distance_with_object_above") <= self.average_vdist:
+				self.formatted_output[-1] = "\t".join([self.formatted_output[-1], element.get("text")])
 			else:
-				final_list.append(element.get("text"))
-			print element
+				self.formatted_output.append(element.get("text"))
 	
-	
-	
-		for nn in final_list:
-			print nn
-	
-		print final_list
-		print "average vertical distance %s"%(sum(vdistance)/int(len(self.whole_objects_list)))
+
+	def print_output(self):
+		for sentence in self.formatted_output:
+			print sentence
 
 
 	def rearrange_on_the_basis_of_y0(self):
 		newlist = sorted(self.objects_respective_vertical_distance, key=lambda k: k['y0'], reverse=True) 	
 		return newlist
+
+
+	def update_average_vdist(self):
+		"""
+		If average_vdist param is not provided to the class, This methos will calculate the average vdist
+		
+		Only the objects which are not children of other objects is considered while calculating the 
+		average_vdist because if we do consider them, the average comes out to be to much for iut to be taken into account
+		"""
+		if not self.average_vdist:
+			vdistance = list()
+			vdistance = [element.get("vertical_distance_with_object_above") for element in self.objects_respective_vertical_distance
+					if element.get("vertical_distance_with_object_above") != 0]
+			self.average_vdist = sum(vdistance)/len(vdistance)
+	
 
 
 
@@ -311,6 +363,6 @@ def remove_headings(lt_obj):
 
 if __name__ == "__main__":
 	filename = sys.argv[1]
-	print filename
 	ins = PDFConverter(filename, encoding=None, pages=1, images_folder=None)
 	ins.parse_page()
+	ins.print_output()
