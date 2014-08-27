@@ -144,29 +144,34 @@ class PDFConverter:
 		print "index==%s"%index
 		"""
 		try:
-			self.whole_objects_list.append({
-							"object": 
-								child,
-							"vertical_distance_with_object_above": 
-											child.vdistance(self.whole_objects_list[-1]["object"]), 
-							"height":
-								child.height,
-							"text": 
-								child.get_text(), 
-							"x0": 
-								child.x0, 
-							"x1": 	
-								child.x1, 
-							"y0": 
-								child.y0, 
-							"y1": 
-								child.y1,
-							"is_child": 
-								True,})
+			self.objects_respective_vertical_distance.append({
+				"vertical_distance_with_object_above": 
+									child.vdistance(self.whole_objects_list[-1]["object"]), 
+				"x0": 
+					child.x0, 
+				"x1": 	
+					child.x1, 
+				"y0": 
+					child.y0, 
+				"y1": 
+					child.y1,
+				"text": 
+					child.get_text(), 
+					})
 		except IndexError:
 			print "index error occurred"
 			pass
 	
+		self.whole_objects_list.append({
+			"object": 
+				child,
+			"height":
+				child.height,
+			"text": 
+				child.get_text(), 
+			"is_child": 
+				False,})
+					
 	
 	def parse_layout_objects(self, layout_objects, page_number):
 		"""
@@ -181,15 +186,9 @@ class PDFConverter:
 				
 				else:
 					try:
-						self.whole_objects_list.append({
-							"object": 
-								layout_object,
+						self.objects_respective_vertical_distance.append({
 							"vertical_distance_with_object_above": 
 											layout_object.vdistance(self.whole_objects_list[-1]["object"]), 
-							"height":
-								layout_object.height,
-							"text": 
-								layout_object.get_text(), 
 							"x0": 
 								layout_object.x0, 
 							"x1": 	
@@ -198,12 +197,21 @@ class PDFConverter:
 								layout_object.y0, 
 							"y1": 
 								layout_object.y1,
-							"is_child": 
-								False,})
-
+							"text": 
+								layout_object.get_text(), 
+								})
 					except IndexError:
 						print "index error occurred"
 						pass
+					self.whole_objects_list.append({
+							"object": 
+								layout_object,
+							"height":
+								layout_object.height,
+							"text": 
+								layout_object.get_text(), 
+							"is_child": 
+								False,})
 					
 			
 			elif isinstance(layout_object, pdfminer.layout.LTImage):
@@ -251,7 +259,7 @@ class PDFConverter:
 		vdistance = list()
 		i = 0
 		
-		for element in self.whole_objects_list:
+		for element in self.objects_respective_vertical_distance:
 			print element.get("vertical_distance_with_object_above"), element.get("text")
 			vdistance.append(element.get("vertical_distance_with_object_above"))
 	
@@ -284,39 +292,8 @@ class PDFConverter:
 
 
 	def rearrange_on_the_basis_of_y0(self):
-		newlist = sorted(self.whole_objects_list, key=lambda k: k['y0'], reverse=True) 	
+		newlist = sorted(self.objects_respective_vertical_distance, key=lambda k: k['y0'], reverse=True) 	
 		return newlist
-
-def update_page_text_hash (h, lt_obj, pct=0.15):
-	"""Use the bbox x0,x1 values within pct% to produce lists of associated text within the hash"""
-	x0 = lt_obj.bbox[0]
-	x1 = lt_obj.bbox[1]
-	x2 = lt_obj.bbox[2]
-	x3 = lt_obj.bbox[3]
-	key_found = False
-
-	h[(x0,x2, x1, x3)] = [to_bytestring(lt_obj.get_text())]
-	
-	"""
-	for k, v in h.items():
-		hash_x0 = k[0]
-		
-		if x0 >= ((hash_x0*(1.0-pct)) -2) and (hash_x0 * (1.0 - pct) +2) <= x0:
-				# the text inside this LT* object was positioned at the same
-				# width as a prior series of text, so it belongs together
-				key_found = True
-				v.append(to_bytestring(lt_obj.get_text()))
-				h[k] = v
-	if not key_found:
-		# the text, based on width, is a new series,
-		# so it gets its own series (entry in the hash)
-		h[(x0,x1)] = [to_bytestring(lt_obj.get_text())]
-	"""
-	return h
-
-
-
-
 
 
 
@@ -330,26 +307,6 @@ def remove_headings(lt_obj):
 	"""
 
 	pass
-
-
-
-
-
-
-
-
-
-def run(filename):
-	# Open a PDF file.
-	fp = open(filename, 'rb')
-
-	# Create a PDF parser object associated with the file object.
-	parser = PDFParser(fp)
-
-	# Create a PDF document object that stores the document structure.
-	# Password for initialization as 2nd parameter
-	document = PDFDocument(parser)
-	return parse_page(document, "images")
 
 
 if __name__ == "__main__":
