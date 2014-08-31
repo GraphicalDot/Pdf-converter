@@ -318,7 +318,7 @@ class PDFConverter:
 		two_dimensional_matrix = [[(element, s) for s in range(0, 649)] for element in range(0, 829)]
 		ii = [(int(i["x0"]), int(i["y0"])) for i in self.whole_objects_list]	
 		print sorted([int(i["x0"]) for i in self.whole_objects_list])	
-		print sorted([int(i["y0"]) for i in self.whole_objects_list])	
+		print [int(i["y0"]) for i in self.whole_objects_list]
 		
 		print "length of the list %s"%len(ii)
 		print "length of the set %s"%len(list(set(ii)))
@@ -332,10 +332,14 @@ class PDFConverter:
 
 			"""
 			x0, y0, x1, y1 = int(_object["x0"]), int(_object["y0"]), int(_object["x1"]), int(_object["y1"])
-			print "\n\n", x0, y0, x1, y1, "\n\n"
 
 			counter = 0
 			two_dimensional_matrix[y0][x0] = _object
+			for element in range(x0+1, x1+1):
+				two_dimensional_matrix[y0][element] = None
+		
+			two_dimensional_matrix[y0] = [element for element in two_dimensional_matrix[y0] if element]	
+		
 		for element in two_dimensional_matrix:
 			for member in element:
 				try:
