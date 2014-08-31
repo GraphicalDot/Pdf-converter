@@ -10,6 +10,7 @@ from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.pdfdevice import PDFDevice
 from pdfminer.layout import LAParams
 from pdfminer.converter import PDFPageAggregator
+from pdfminer.converter import TextConverter
 import pdfminer
 import sys
 
@@ -188,8 +189,20 @@ class PDFConverter:
 		"""
 		try:
 			self.objects_respective_vertical_distance.append({
+				"object": 
+									child,
+				"font_size": 
+									child._objs[0].size,
+				"font_name": 
+									child._objs[0].fontname,
 				"vertical_distance_with_object_above": 
 									child.vdistance(self.whole_objects_list[-1]["object"]), 
+				"horizontal_distance_with_object_above": 
+									child.hdistance(self.whole_objects_list[-1]["object"]), 
+				"voverlap": 
+									child.voverlap(self.whole_objects_list[-1]["object"]), 
+				"hoverlap": 
+									child.hoverlap(self.whole_objects_list[-1]["object"]), 
 				"x0": 
 					child.x0, 
 				"x1": 	
@@ -230,9 +243,23 @@ class PDFConverter:
 				
 				else:
 					try:
+					#	find_neighbours
 						self.objects_respective_vertical_distance.append({
+							"object": 
+									layout_object,
+							"size": 
+									layout_object._objs[0]._objs[0].size,
+
+							"font_name": 
+									layout_object._objs[0]._objs[0].fontname,
 							"vertical_distance_with_object_above": 
 											layout_object.vdistance(self.whole_objects_list[-1]["object"]), 
+							"horizontal_distance_with_object_above": 
+											layout_object.hdistance(self.whole_objects_list[-1]["object"]), 
+							"voverlap": 
+											layout_object.voverlap(self.whole_objects_list[-1]["object"]), 
+							"hoverlap": 
+											layout_object.hoverlap(self.whole_objects_list[-1]["object"]), 
 							"x0": 
 								layout_object.x0, 
 							"x1": 	
@@ -298,10 +325,24 @@ class PDFConverter:
 	
 		without_heading = [element for element in FINAL_LIST if element not in another_list]
 		"""
-	
+
+		for element in self.objects_respective_vertical_distance:
+			print element.get("text"), element.get("hoverlap")
+
 		self.update_average_vdist() #calculates the average_vdist class variable
-	
+
+		"""
+		for element in self.objects_respective_vertical_distance:
+			print element, "\n\n"
+		"""
+
 		self.joining_strings_for_same_question()	#joining string that belongs to the same question
+
+
+
+
+
+
 
 	def joining_strings_for_same_question(self):
 		"""
@@ -365,6 +406,108 @@ def remove_headings(lt_obj):
 
 if __name__ == "__main__":
 	filename = sys.argv[1]
-	ins = PDFConverter(filename, encoding=None, pages=None, images_folder=None)
+	ins = PDFConverter(filename, encoding=None, pages=1, images_folder=None)
 	ins.parse_page()
 	ins.print_output()
+
+
+
+"""
+#########################################################
+############ First column starts #######################
+#########################################################
+{'vertical_distance_with_object_above': 14.025703762000035, 'x1': 315.0156999999999, 'y0': 575.4193, 'horizontal_distance_with_object_above': 0, 'voverlap': 0, 'y1': 592.2093, 'hoverlap': 62.77159999999992, 'x0': 72.3966, 'object': <LTTextLineHorizontal 72.397,575.419,315.016,592.209 u'1. The  sun  remains  visible  for  some  time  after  it\n'>, 'text': u'1. The  sun  remains  visible  for  some  time  after  it\n'} 
+
+
+{'vertical_distance_with_object_above': 0, 'x1': 314.20019999999994, 'y0': 568.7194, 'horizontal_distance_with_object_above': 0, 'voverlap': 5.2900999999999385, 'y1': 580.7094, 'hoverlap': 227.17569999999992, 'x0': 87.84, 'object': <LTTextLineHorizontal 87.840,568.719,314.200,580.709 u'actually sets below the horizon. This happens due to\n'>, 'text': u'actually sets below the horizon. This happens due to\n'} 
+
+
+{'vertical_distance_with_object_above': 0.009900000000016007, 'x1': 205.2596, 'y0': 556.7194999999999, 'horizontal_distance_with_object_above': 0, 'voverlap': 0, 'y1': 568.7094999999999, 'hoverlap': 117.4196, 'x0': 87.84, 'object': <LTTextLineHorizontal 87.840,556.719,205.260,568.709 u'1. Atmospheric refraction\n'>, 'text': u'1. Atmospheric refraction\n'} 
+
+
+{'vertical_distance_with_object_above': 0.00989999999990232, 'x1': 183.3271, 'y0': 544.7196, 'horizontal_distance_with_object_above': 0, 'voverlap': 0, 'y1': 556.7096, 'hoverlap': 95.4871, 'x0': 87.84, 'object': <LTTextLineHorizontal 87.840,544.720,183.327,556.710 u'2. Scattering of light\n'>, 'text': u'2. Scattering of light\n'} 
+
+
+{'vertical_distance_with_object_above': 0.009900000000016007, 'x1': 150.5717, 'y0': 532.7197, 'horizontal_distance_with_object_above': 0, 'voverlap': 0, 'y1': 544.7097, 'hoverlap': 62.73169999999999, 'x0': 87.84, 'object': <LTTextLineHorizontal 87.840,532.720,150.572,544.710 u'3. Dispersion\n'>, 'text': u'3. Dispersion\n'}
+
+
+
+		if next.x0 => previous.x0 and next.y0 <= previous.yo:
+			beolongs to this column, whatever it is
+
+		if next.y0 => previous.y0:
+		
+		if next.x0 => previous.x0 and next.y0 => previous.yo:
+			anamoly for whatever column
+
+
+
+
+#########################################################
+############ Anamoly of first column #######################
+#########################################################
+
+
+{'vertical_distance_with_object_above': 0.009899999999959164, 'x1': 302.6319, 'y0': 457.72029999999995, 'horizontal_distance_with_object_above': 60.96879999999999, 'voverlap': 0, 'y1': 469.71029999999996, 'hoverlap': 0, 'x0': 201.6417, 'object': <LTTextLineHorizontal 201.642,457.720,302.632,469.710 u'(b) Remain unaffected\n'>, 'text': u'(b) Remain unaffected\n'} 
+
+
+{'vertical_distance_with_object_above': 0.009899999999959164, 'x1': 282.5311, 'y0': 445.7204, 'horizontal_distance_with_object_above': 0, 'voverlap': 0, 'y1': 457.7104, 'hoverlap': 80.8894, 'x0': 201.6417, 'object': <LTTextLineHorizontal 201.642,445.720,282.531,457.710 u'(d) Be almost half\n'>, 'text': u'(d) Be almost half\n'} 
+
+
+{'vertical_distance_with_object_above': 51.0095, 'x1': 274.7266, 'y0': 508.7199, 'horizontal_distance_with_object_above': 0, 'voverlap': 0, 'y1': 520.7099000000001, 'hoverlap': 73.08490000000003, 'x0': 201.6417, 'object': <LTTextLineHorizontal 201.642,508.720,274.727,520.710 u'(b) 1 and 2 only\n'>, 'text': u'(b) 1 and 2 only\n'} 
+
+
+{'vertical_distance_with_object_above': 0.009900000000016007, 'x1': 285.9884, 'y0': 496.71999999999997, 'horizontal_distance_with_object_above': 0, 'voverlap': 0, 'y1': 508.71, 'hoverlap': 73.08490000000003, 'x0': 201.6417, 'object': <LTTextLineHorizontal 201.642,496.720,285.988,508.710 u'(d) 1, 2 and 3 only\n'>, 'text': u'(d) 1, 2 and 3 only\n'} 
+
+
+{'vertical_distance_with_object_above': 8.30989999999997, 'x1': 80.6156, 'y0': 476.42010000000005, 'horizontal_distance_with_object_above': 121.02609999999999, 'voverlap': 0, 'y1': 488.4101, 'hoverlap': 0, 'x0': 72.3966, 'object': <LTTextBoxHorizontal(5) 72.397,476.420,80.616,488.410 u'2.\n'>, 'text': u'2.\n'} 
+
+########################################################t
+############ second columns proceeds after first column #######################
+#########################################################
+
+{'vertical_distance_with_object_above': 0.009900000000016007, 'x1': 314.642, 'y0': 93.2235, 'horizontal_distance_with_object_above': 0, 'voverlap': 0, 'y1': 105.2135, 'hoverlap': 90.66720000000001, 'x0': 87.7524, 'object': <LTTextLineHorizontal 87.752,93.224,314.642,105.213 u'(c) Anywhere, irrespective of the position of the sun\n'>, 'text': u'(c) Anywhere, irrespective of the position of the sun\n'} 
+
+
+{'vertical_distance_with_object_above': 0.009900000000001796, 'x1': 238.1337, 'y0': 81.2236, 'horizontal_distance_with_object_above': 0, 'voverlap': 0, 'y1': 93.2136, 'hoverlap': 150.3813, 'x0': 87.84, 'object': <LTTextLineHorizontal 87.840,81.224,238.134,93.214 u'(d) Even in the absence of the sun\n'>, 'text': u'(d) Even in the absence of the sun\n'} 
+
+
+{'vertical_distance_with_object_above': 482.20570000000004, 'x1': 585.2944, 'y0': 575.4193, 'horizontal_distance_with_object_above': 104.62289999999999, 'voverlap': 0, 'y1': 592.2093, 'hoverlap': 0, 'x0': 342.7566, 'object': <LTTextBoxHorizontal(18) 342.757,575.419,585.294,592.209 u'8. When  white  light  passes  through  a  glass  prism,  it\n'>, 'text': u'8. When  white  light  passes  through  a  glass  prism,  it\n'} 
+
+
+{'vertical_distance_with_object_above': 0, 'x1': 512.6815, 'y0': 568.7194, 'horizontal_distance_with_object_above': 0, 'voverlap': 5.2900999999999385, 'y1': 580.7094, 'hoverlap': 169.92490000000004, 'x0': 358.2, 'object': <LTTextLineHorizontal 358.200,568.719,512.682,580.709 u'gets dispersed into colours because\n'>, 'text': u'gets dispersed into colours because\n'} 
+
+
+{'vertical_distance_with_object_above': 0.009900000000016007, 'x1': 519.8824000000001, 'y0': 556.7194999999999, 'horizontal_distance_with_object_above': 0, 'voverlap': 0, 'y1': 568.7094999999999, 'hoverlap': 154.48150000000004, 'x0': 358.2, 'object': <LTTextLineHorizontal 358.200,556.719,519.882,568.709 u'(a) Glass imparts colours to the light\n'>, 'text': u'(a) Glass imparts colours to the light\n'} 
+
+
+
+################################################################
+############ Anamoly of the second column ######################
+################################################################
+
+{'text': u'(b) 1 and 2\n', 'object': <LTTextLineHorizontal 472.002,445.720,523.207,457.710 u'(b) 1 and 2\n'>, 'vertical_distance_with_object_above': 0.009900000000016007, 'y1': 457.7104, 'y0': 445.7204, 'x0': 472.0017, 'x1': 523.2073999999999} 
+
+
+{'text': u'(d) 1 and 4\n', 'object': <LTTextLineHorizontal 472.002,433.720,523.207,445.710 u'(d) 1 and 4\n'>, 'vertical_distance_with_object_above': 0.009900000000016007, 'y1': 445.71049999999997, 'y0': 433.72049999999996, 'x0': 472.0017, 'x1': 523.2073999999999} 
+
+
+{'text': u'2. Green, orange, red\n', 'object': <LTTextLineHorizontal 472.002,481.720,572.506,493.710 u'2. Green, orange, red\n'>, 'vertical_distance_with_object_above': 36.00970000000001, 'y1': 493.7102, 'y0': 481.7202, 'x0': 472.0017, 'x1': 572.5056} 
+
+
+{'text': u'4. Blue, green, yellow\n', 'object': <LTTextLineHorizontal 472.002,469.720,574.411,481.710 u'4. Blue, green, yellow\n'>, 'vertical_distance_with_object_above': 0.009900000000016007, 'y1': 481.71029999999996, 'y0': 469.72029999999995, 'x0': 472.0017, 'x1': 574.4114000000001} 
+
+
+{'text': u'10. The  gap  between  the  irrigation  potential  and  its\n', 'object': <LTTextBoxHorizontal(24) 337.258,413.421,585.297,430.211 u'10. The  gap  between  the  irrigation  potential  and  its\n'>, 'vertical_distance_with_object_above': 39.50959999999998, 'y1': 430.2107, 'y0': 413.4207, 'x0': 337.2576, 'x1': 585.2969999999999} 
+
+
+#######################################################################################
+############ Continuation to the secaond page the same question #######################
+#######################################################################################
+
+
+
+
+
+"""
+
