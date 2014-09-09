@@ -317,6 +317,19 @@ class PDFConverter:
 
 
 	def two_dimensional_matrix(self):
+		"""
+		This method now only works according to the one page because it now cannot distinguish whether the question in the last page 
+		is still continuing on the next page.
+
+		The whole matrix was made according to the length and beardth of the page, which has already been calculated by
+		parse_page mthod of this class and has been stored in self.parse_page
+
+		This method creates a two dimensional matrix of the pdf objects according to their coordinates.
+		x0 is the starting x coordinate and x1 is the ending x coordinate, similarly
+		y0 is the starting y coorodinbate and the y1 is the ending y coordinate.
+		
+		
+		"""
 		for item in self.whole_objects_list:
 			print item, "\n\n"
 
