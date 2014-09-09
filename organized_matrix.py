@@ -153,7 +153,9 @@ class PDFConverter:
 			# read the page into a layout object
 			interpreter.process_page(page)
 			layout = device.get_result()
-		
+			self.page_height = layout.height
+			self.page_width = layout.width
+			
 			if self.pages:
 				if page_count == self.pages:
 					break
@@ -315,14 +317,20 @@ class PDFConverter:
 
 
 	def two_dimensional_matrix(self):
+		for item in self.whole_objects_list:
+			print item, "\n\n"
+
 		two_dimensional_matrix = [[(element, s) for s in range(0, 649)] for element in range(0, 829)]
+		
+		
+		"""
 		ii = [(int(i["x0"]), int(i["y0"])) for i in self.whole_objects_list]	
 		print sorted([int(i["x0"]) for i in self.whole_objects_list])	
 		print [int(i["y0"]) for i in self.whole_objects_list]
 		
 		print "length of the list %s"%len(ii)
 		print "length of the set %s"%len(list(set(ii)))
-		
+		"""
 		
 		for _object in self.whole_objects_list:
 			check_list = list()
@@ -335,16 +343,22 @@ class PDFConverter:
 
 			counter = 0
 			two_dimensional_matrix[y0][x0] = _object
+			
+			"""
 			for element in range(x0+1, x1+1):
 				two_dimensional_matrix[y0][element] = None
-		
+				print "matrix updated with new cooridinates"
+
 			two_dimensional_matrix[y0] = [element for element in two_dimensional_matrix[y0] if element]	
+			"""
 		
-		for element in two_dimensional_matrix:
+		check_list = list()
+		for element in two_dimensional_matrix[::-1]:
 			for member in element:
 				try:
 					if isinstance( member["object"], pdfminer.layout.LTTextBox) or isinstance(member["object"], pdfminer.layout.LTTextLine):
 						check_list.append("True")
+						print member["object"]
 				except:
 					pass
 		
